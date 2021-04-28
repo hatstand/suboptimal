@@ -61,9 +61,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match rollout {
             Some(r) => {
                 match r.experiments.len() {
-                    0 => println!("{} disabled", flag.key),
                     1 => {
-                        println!("{}", flag.key)
+                        println!("{} ({})", flag.key, flag.rollout_id);
+                        match r.experiments[0].traffic_allocation.len() {
+                            0 => println!("\t disabled"),
+                            1 => {
+                                let t = &r.experiments[0].traffic_allocation[0];
+                                println!("\t {}%", t.end_of_range / 100)
+                            },
+                            _ => println!("\t too complicated for me right now:-S"),
+                        }
                     },
                     _ => println!("{} ({}) is too complicated for me right now:-S", flag.key, flag.rollout_id),
                 }
