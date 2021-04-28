@@ -35,6 +35,8 @@ struct Experiment {
     traffic_allocation: Vec<TrafficAllocation>,
     #[serde(rename="audienceIds")]
     audience_ids: Vec<String>,
+    #[serde(rename="audienceConditions", default)]
+    audience_conditions: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -99,9 +101,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 })
                                 .collect();
                             let merged_audience_name = audiences.join(", ");
+
+                            let audience_condition_ids: Vec<String> = exp.audience_conditions.get(1..).unwrap_or(&vec![]).iter()
+                                .map(|x| audience_id_to_audience.get(x).map_or(x.clone(), |aud| aud.name.clone()))
+                                .sorted()
+                                .collect();
+                            let condition = exp.audience_conditions.get(0);
+                            let condition_desc = match condition {
+                                Some(c) => Some(audience_condition_ids.join(&format!(" {} ", c.to_uppercase()))),
+                                None => None,
+                            };
+
                             match exp.traffic_allocation.len() {
-                                0 => println!("\t disabled for {} ({})", exp.id, merged_audience_name),
-                                1 => println!("\t {}% for {} ({})", exp.traffic_allocation[0].end_of_range / 100, exp.id, merged_audience_name),
+                                0 => println!("\t disabled for {} ({})", exp.id, condition_desc.unwrap_or(merged_audience_name)),
+                                1 => println!("\t {}% for {} ({})", exp.traffic_allocation[0].end_of_range / 100, exp.id, condition_desc.unwrap_or(merged_audience_name)),
                                 _ => println!("\t too complicated for me right now:-S"),
                             }
                         }
