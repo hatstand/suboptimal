@@ -59,7 +59,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for flag in f.feature_flags.iter().sorted_by(|a, b| Ord::cmp(&a.key, &b.key)) {
         let rollout = rollout_id_to_rollout.get(&flag.rollout_id);
         match rollout {
-            Some(r) => println!("{} => {}", flag.key, r.id),
+            Some(r) => {
+                match r.experiments.len() {
+                    0 => println!("{} disabled", flag.key),
+                    1 => {
+                        println!("{}", flag.key)
+                    },
+                    _ => println!("{} ({}) is too complicated for me right now:-S", flag.key, flag.rollout_id),
+                }
+            },
             None => println!("no matching rollout for flag {}", flag.key)
         }
     }
