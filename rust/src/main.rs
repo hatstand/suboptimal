@@ -1,4 +1,6 @@
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct TrafficAllocation {
@@ -47,9 +49,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .text()
         .await?;
 
-    match serde_json::from_str::<OptimizelyFile>(&resp) {
-        Ok(f) => println!("{:#?}", f),
-        Err(e) => println!(":-( {}", e),
+    let f = serde_json::from_str::<OptimizelyFile>(&resp)?;
+
+    let rollout_id_to_rollout: HashMap<_, _> =
+        f.rollouts.iter()
+        .map(|rollout| (rollout.id.clone(), rollout))
+        .collect();
+
+    for flag in f.feature_flags.iter().sorted_by(|a, b| Ord::cmp(&a.key, &b.key)) {
+        let rollout = rollout_id_to_rollout.get(&flag.rollout_id);
+        match rollout {
+            Some(r) => println!("{} => {}", flag.key, r.id),
+            None => println!("no matching rollout for flag {}", flag.key)
+        }
     }
 
     Ok(())
