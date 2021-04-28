@@ -60,19 +60,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let rollout = rollout_id_to_rollout.get(&flag.rollout_id);
         match rollout {
             Some(r) => {
+                println!("{} ({})", flag.key, flag.rollout_id);
                 match r.experiments.len() {
                     1 => {
-                        println!("{} ({})", flag.key, flag.rollout_id);
                         match r.experiments[0].traffic_allocation.len() {
                             0 => println!("\t disabled"),
                             1 => {
                                 let t = &r.experiments[0].traffic_allocation[0];
-                                println!("\t {}%", t.end_of_range / 100)
+                                println!("\t {}%", t.end_of_range / 100);
                             },
                             _ => println!("\t too complicated for me right now:-S"),
                         }
                     },
-                    _ => println!("{} ({}) is too complicated for me right now:-S", flag.key, flag.rollout_id),
+                    _ => {
+                        for exp in r.experiments.iter() {
+                            match exp.traffic_allocation.len() {
+                                0 => println!("\t disabled for {}", exp.id),
+                                1 => println!("\t {}% for {}", exp.traffic_allocation[0].end_of_range / 100, exp.id),
+                                _ => println!("\t too complicated for me right now:-S"),
+                            }
+                        }
+                    }
                 }
             },
             None => println!("no matching rollout for flag {}", flag.key)
