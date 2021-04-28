@@ -116,8 +116,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             };
 
                             match exp.traffic_allocation.len() {
-                                0 => println!("\t disabled for {} ({})", exp.id, condition_desc.unwrap_or(merged_audience_name)),
-                                1 => println!("\t {}% for {} ({})", exp.traffic_allocation[0].end_of_range / 100, exp.id, condition_desc.unwrap_or(merged_audience_name)),
+                                0 => println!("\t disabled for {}", condition_desc.unwrap_or(merged_audience_name)),
+                                1 => println!("\t {}% for {}", exp.traffic_allocation[0].end_of_range / 100, condition_desc.unwrap_or(merged_audience_name)),
                                 _ => println!("\t too complicated for me right now:-S"),
                             }
                         }
