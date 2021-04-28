@@ -2,6 +2,14 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Audience {
+    id: String,
+    conditions: String,
+    name: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 struct TrafficAllocation {
     #[serde(rename="entityId")]
@@ -25,6 +33,8 @@ struct Experiment {
     layer_id: String,
     #[serde(rename="trafficAllocation")]
     traffic_allocation: Vec<TrafficAllocation>,
+    #[serde(rename="audienceIds")]
+    audience_ids: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,6 +50,7 @@ struct OptimizelyFile {
     rollouts: Vec<Rollout>,
     #[serde(rename="featureFlags")]
     feature_flags: Vec<FeatureFlag>,
+    audiences: Vec<Audience>,
 }
 
 #[tokio::main]
@@ -54,6 +65,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rollout_id_to_rollout: HashMap<_, _> =
         f.rollouts.iter()
         .map(|rollout| (rollout.id.clone(), rollout))
+        .collect();
+
+    let audience_id_to_audience: HashMap<_, _> =
+        f.audiences.iter()
+        .map(|aud| (aud.id.clone(), aud))
         .collect();
 
     for flag in f.feature_flags.iter().sorted_by(|a, b| Ord::cmp(&a.key, &b.key)) {
@@ -74,9 +90,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     },
                     _ => {
                         for exp in r.experiments.iter() {
+                            let audiences: Vec<String> = exp.audience_ids.iter()
+                                .map(|aud_id| {
+                                    match audience_id_to_audience.get(aud_id) {
+                                        Some(aud) => aud.name.clone(),
+                                        None => aud_id.to_string(),
+                                    }
+                                })
+                                .collect();
+                            let merged_audience_name = audiences.join(", ");
                             match exp.traffic_allocation.len() {
-                                0 => println!("\t disabled for {}", exp.id),
-                                1 => println!("\t {}% for {}", exp.traffic_allocation[0].end_of_range / 100, exp.id),
+                                0 => println!("\t disabled for {} ({})", exp.id, merged_audience_name),
+                                1 => println!("\t {}% for {} ({})", exp.traffic_allocation[0].end_of_range / 100, exp.id, merged_audience_name),
                                 _ => println!("\t too complicated for me right now:-S"),
                             }
                         }
