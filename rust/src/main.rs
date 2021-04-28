@@ -96,11 +96,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 .map(|aud_id| {
                                     match audience_id_to_audience.get(aud_id) {
                                         Some(aud) => aud.name.clone(),
-                                        None => aud_id.to_string(),
+                                        None => aud_id.clone(),
                                     }
                                 })
                                 .collect();
-                            let merged_audience_name = audiences.join(", ");
+                            let merged_audience_name = match audiences.len() {
+                                0 => "Everyone".to_owned(),
+                                _ => audiences.join(", "),
+                            };
 
                             let audience_condition_ids: Vec<String> = exp.audience_conditions.get(1..).unwrap_or(&vec![]).iter()
                                 .map(|x| audience_id_to_audience.get(x).map_or(x.clone(), |aud| aud.name.clone()))
