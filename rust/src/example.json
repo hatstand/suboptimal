@@ -1,0 +1,19 @@
+{
+  "flags": [{
+    "name": "show_recurring_and_non_recurring_amounts",
+    "description": "shows stuff",
+    "environments": {
+      "development": {
+        "rollout": {
+          "everyone": {
+            "percentage": 100
+          }
+        }
+      }
+    }
+  }],
+  "audiences": [{
+    "name": "clearscore_prod",
+    "expression": "client_id == 'foo'"
+  }]
+}

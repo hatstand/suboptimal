@@ -1,7 +1,10 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use serde;
 use std::collections::HashMap;
+use std::fs;
 
+include!(concat!(env!("OUT_DIR"), "/flags.rs"));
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Audience {
@@ -55,9 +58,8 @@ struct OptimizelyFile {
     audiences: Vec<Audience>,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::get("https://flags.creditkudos.com/Production.json")
+async fn print_flags(url: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let resp = reqwest::get(url)
         .await?
         .text()
         .await?;
@@ -127,6 +129,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             None => println!("no matching rollout for flag {}", flag.key)
         }
     }
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    print_flags("https://flags.creditkudos.com/Production.json")
+        .await?;
+
+    let f = fs::read_to_string("./src/example.json")?;
+    let proto = serde_json::from_str::<FlagsFile>(&f)?;
+    // let proto = FlagsFile::decode(io::Cursor::new(f))?;
+
+    println!("example: {:?}", proto);
 
     Ok(())
 }

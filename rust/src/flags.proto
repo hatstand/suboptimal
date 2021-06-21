@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package flags;
+
+message FlagsFile {
+  message Flag {
+    string name = 1;
+    string description = 2;
+
+    message Environment {
+      // Audience name -> Rollout configuration.
+      map<string, Rollout> rollout = 1;
+    }
+    // Environment name -> environment configuration.
+    map<string, Environment> environments = 3;
+  }
+
+  message Rollout {
+    int32 percentage = 1;
+  }
+
+  message Audience {
+    string name = 1;
+    string expression = 2;
+  }
+
+  repeated Flag flags = 1;
+  repeated Audience audiences = 2;
+}
